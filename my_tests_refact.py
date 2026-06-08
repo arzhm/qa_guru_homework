@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 
 class TestSuite:
     def __init__(self):
+        self.driver = None
         self.url = "https://qa-guru.github.io/one-page-form/login.html"
         self.login_locator = (By.ID, "login-input")
         self.password_locator = (By.ID, "password-input")
@@ -30,15 +31,19 @@ class TestSuite:
             # 3. Поиск элементов и заполнение полей
 
             login_field = self.driver.find_element(*self.login_locator)
-            login_field.send_keys("test@test.ru")
+            login_field.send_keys("user1")
 
             password_field = self.driver.find_element(*self.password_locator)
-            password_field.send_keys("123456")
+            password_field.send_keys("password1")
 
             submit_button = self.driver.find_element(*self.submit_button_locator)
             submit_button.click()
 
             time.sleep(3)
+
+            welcome = self.driver.find_element(By.ID, "welcome-message")
+            assert "Welcome" in welcome.text
+            assert "user1" in welcome.text
 
             print("Тест успешно пройден!")
 
