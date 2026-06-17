@@ -1,126 +1,133 @@
-import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
-def set_up_test(driver):
-    # 1. Открытие страницы
-    driver.get("https://qa-guru.github.io/one-page-form/login.html")
-    driver.maximize_window()
-    time.sleep(3)  # Пауза, чтобы визуально заметить открытие
+class TestSuite:
+    def __init__(self):
+        self.driver = None
+        self.url = "https://qa-guru.github.io/one-page-form/login.html"
+        self.login_locator = (By.ID, "login-input")
+        self.password_locator = (By.ID, "password-input")
+        self.submit_button_locator = (By.ID, "submit-button")
+        self.error_message_locator = (By.ID, "error-message")
+
+    def set_up_test(self):
+        # 1. Открытие страницы
+        self.driver.get(self.url)
+        self.driver.maximize_window()
+
+    def tear_down_test(self):
+        # 2. Закрытие браузера в любом случае
+        self.driver.quit()
+
+    def positiv_test(self):
+
+        try:
+            self.driver = webdriver.Chrome()
+            self.set_up_test()
+            
+            # 3. Поиск элементов и заполнение полей
+
+            login_field = self.driver.find_element(*self.login_locator)
+            login_field.send_keys("user1")
+
+            password_field = self.driver.find_element(*self.password_locator)
+            password_field.send_keys("password1")
+
+            submit_button = self.driver.find_element(*self.submit_button_locator)
+            submit_button.click()
 
 
-def tear_down_test(driver):
-    # 2. Закрытие браузера в любом случае
-    driver.quit()
+            welcome = WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located((By.ID, "welcome-message"))
+            )
+            assert "Welcome" in welcome.text
+            assert "user1" in welcome.text
+
+            print("Тест успешно пройден!")
+
+        finally:
+            self.tear_down_test()
+
+    def negativ1_test(self):
+
+        try:
+            self.driver = webdriver.Chrome()
+            self.set_up_test()
+           
+            login_field = self.driver.find_element(*self.login_locator)
+            login_field.send_keys("negativ@test.ru")
+
+            password_field = self.driver.find_element(*self.password_locator)
+            password_field.send_keys("123456")
+
+            submit_button = self.driver.find_element(*self.submit_button_locator)
+            submit_button.click()
 
 
-login_locator = (By.ID, "login-input")
-password_locator = (By.ID, "password-input")
-submit_button_locator = (By.ID, "submit-button")
-error_message_locator = (By.ID, "error-message")
+            error_message =  WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(self.error_message_locator)
+            )
+
+            assert "Wrong login or password" in error_message.text
+
+            print("Тест успешно пройден!")
+
+        finally:
+            self.tear_down_test()
+
+    def negativ2_test(self):
+
+        try:
+            self.driver = webdriver.Chrome()
+            self.set_up_test()
+            
+            login_field = self.driver.find_element(*self.login_locator)
+            login_field.send_keys("")
+
+            password_field = self.driver.find_element(*self.password_locator)
+            password_field.send_keys("123456")
+
+            submit_button = self.driver.find_element(*self.submit_button_locator)
+            submit_button.click()
+            error_message =  WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(self.error_message_locator)
+            )
+            assert "Login is required (minimum 3 characters)" in error_message.text
+
+            print("Тест успешно пройден!")
+        finally:
+            self.tear_down_test()
+
+    def negativ3_test(self):
+
+        try:
+            self.driver = webdriver.Chrome()
+            self.set_up_test()
+
+            login_field = self.driver.find_element(*self.login_locator)
+            login_field.send_keys("test@test.ru")
+
+            password_field = self.driver.find_element(*self.password_locator)
+            password_field.send_keys("")
+
+            submit_button = self.driver.find_element(*self.submit_button_locator)
+            submit_button.click()
+            error_message =  WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(self.error_message_locator)
+            )
+            assert "Password is required (minimum 6 characters)" in error_message.text
+
+            print("Тест успешно пройден!")
+
+        finally:
+            self.tear_down_test()
 
 
-def positiv_test():
-    driver = webdriver.Chrome()
-
-    try:
-        set_up_test(driver)
-
-        # 3. Поиск элементов и заполнение полей
-
-        login_field = driver.find_element(*login_locator)
-        login_field.send_keys("test@test.ru")
-
-        password_field = driver.find_element(*password_locator)
-        password_field.send_keys("123456")
-
-        submit_button = driver.find_element(*submit_button_locator)
-        submit_button.click()
-
-        time.sleep(3)
-
-        print("Тест успешно пройден!")
-
-    finally:
-        tear_down_test(driver)
-
-
-def negativ1_test():
-    driver = webdriver.Chrome()
-
-    try:
-        set_up_test(driver)
-
-        login_field = driver.find_element(*login_locator)
-        login_field.send_keys("negativ@test.ru")
-
-        password_field = driver.find_element(*password_locator)
-        password_field.send_keys("123456")
-
-        submit_button = driver.find_element(*submit_button_locator)
-        submit_button.click()
-
-        time.sleep(3)
-
-        error_message = driver.find_element(*error_message_locator)
-
-        assert "Wrong login or password" in error_message.text
-
-        print("Тест успешно пройден!")
-
-    finally:
-        tear_down_test(driver)
-
-
-def negativ2_test():
-    driver = webdriver.Chrome()
-
-    try:
-        set_up_test(driver)
-
-        login_field = driver.find_element(*login_locator)
-        login_field.send_keys("")
-
-        password_field = driver.find_element(*password_locator)
-        password_field.send_keys("123456")
-
-        submit_button = driver.find_element(*submit_button_locator)
-        submit_button.click()
-        time.sleep(3)
-        error_message = driver.find_element(*error_message_locator)
-        assert "Login is required (minimum 3 characters)" in error_message.text
-
-        print("Тест успешно пройден!")
-    finally:
-        tear_down_test(driver)
-
-
-def negativ3_test():
-    driver = webdriver.Chrome()
-
-    try:
-        set_up_test(driver)
-
-        login_field = driver.find_element(*login_locator)
-        login_field.send_keys("test@test.ru")
-
-        password_field = driver.find_element(*password_locator)
-        password_field.send_keys("")
-
-        submit_button = driver.find_element(*submit_button_locator)
-        submit_button.click()
-        time.sleep(3)
-        error_message = driver.find_element(*error_message_locator)
-        assert "Password is required (minimum 6 characters)" in error_message.text
-
-        print("Тест успешно пройден!")
-
-    finally:
-        tear_down_test(driver)
-
-
-positiv_test()
-negativ1_test()
-negativ2_test()
-negativ3_test()
+suite = TestSuite()
+suite.positiv_test()
+suite.negativ1_test()
+suite.negativ2_test()
+suite.negativ3_test()
