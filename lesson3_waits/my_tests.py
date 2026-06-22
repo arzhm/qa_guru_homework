@@ -1,6 +1,7 @@
-import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 class TestSuite:
@@ -16,7 +17,6 @@ class TestSuite:
         # 1. Открытие страницы
         self.driver.get(self.url)
         self.driver.maximize_window()
-        time.sleep(3)  # Пауза, чтобы визуально заметить открытие
 
     def tear_down_test(self):
         # 2. Закрытие браузера в любом случае
@@ -39,9 +39,10 @@ class TestSuite:
             submit_button = self.driver.find_element(*self.submit_button_locator)
             submit_button.click()
 
-            time.sleep(3)
 
-            welcome = self.driver.find_element(By.ID, "welcome-message")
+            welcome = WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located((By.ID, "welcome-message"))
+            )
             assert "Welcome" in welcome.text
             assert "user1" in welcome.text
 
@@ -65,9 +66,10 @@ class TestSuite:
             submit_button = self.driver.find_element(*self.submit_button_locator)
             submit_button.click()
 
-            time.sleep(3)
 
-            error_message = self.driver.find_element(*self.error_message_locator)
+            error_message =  WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(self.error_message_locator)
+            )
 
             assert "Wrong login or password" in error_message.text
 
@@ -90,8 +92,9 @@ class TestSuite:
 
             submit_button = self.driver.find_element(*self.submit_button_locator)
             submit_button.click()
-            time.sleep(3)
-            error_message = self.driver.find_element(*self.error_message_locator)
+            error_message =  WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(self.error_message_locator)
+            )
             assert "Login is required (minimum 3 characters)" in error_message.text
 
             print("Тест успешно пройден!")
@@ -112,8 +115,9 @@ class TestSuite:
 
             submit_button = self.driver.find_element(*self.submit_button_locator)
             submit_button.click()
-            time.sleep(3)
-            error_message = self.driver.find_element(*self.error_message_locator)
+            error_message =  WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located(self.error_message_locator)
+            )
             assert "Password is required (minimum 6 characters)" in error_message.text
 
             print("Тест успешно пройден!")
