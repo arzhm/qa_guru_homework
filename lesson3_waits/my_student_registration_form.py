@@ -5,14 +5,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
 
 
 class TestSuite:
     def __init__(self):
         self.driver = None
         self.wait = None
-        self.url = "https://qa-guru.github.io/one-page-form/automation-practice-form.html"
+        self.url = (
+            "https://qa-guru.github.io/one-page-form/automation-practice-form.html"
+        )
         self.temp_file_path = os.path.abspath("test_image.jpg")
 
         # Заголовки страницы
@@ -20,8 +22,14 @@ class TestSuite:
         self.form_sub_title_locator = (By.XPATH, "/html/body/main/section/div/p")
 
         # Баннер, который перекрывает элементы
-        self.banner_title_locator = (By.XPATH, "//*[contains(text(), 'Level up your automation')]")
-        self.close_banner_button_locator = (By.XPATH, "//*[@id='fixedban']/div/div/button")
+        self.banner_title_locator = (
+            By.XPATH,
+            "//*[contains(text(), 'Level up your automation')]",
+        )
+        self.close_banner_button_locator = (
+            By.XPATH,
+            "//*[@id='fixedban']/div/div/button",
+        )
 
         # Основные поля формы
         self.first_name_locator = (By.ID, "firstName")
@@ -43,7 +51,10 @@ class TestSuite:
         self.calendar_locator = (By.CLASS_NAME, "react-datepicker__month-container")
         self.month_select_locator = (By.CLASS_NAME, "react-datepicker__month-select")
         self.year_select_locator = (By.CLASS_NAME, "react-datepicker__year-select")
-        self.day_25_locator = (By.CSS_SELECTOR, ".react-datepicker__day--025:not(.react-datepicker__day--outside-month)")
+        self.day_25_locator = (
+            By.CSS_SELECTOR,
+            ".react-datepicker__day--025:not(.react-datepicker__day--outside-month)",
+        )
 
         # Модальное окно с результатами
         self.modal_title_locator = (By.ID, "example-modal-sizes-title-lg")
@@ -74,7 +85,9 @@ class TestSuite:
         # Баннер может перекрывать элементы формы, поэтому закрываем его
         try:
             self.wait.until(EC.visibility_of_element_located(self.banner_title_locator))
-            close_banner_btn = self.wait.until(EC.element_to_be_clickable(self.close_banner_button_locator))
+            close_banner_btn = self.wait.until(
+                EC.element_to_be_clickable(self.close_banner_button_locator)
+            )
             close_banner_btn.click()
             self.wait.until(EC.invisibility_of_element(close_banner_btn))
         except Exception:
@@ -83,36 +96,56 @@ class TestSuite:
     def hide_footer_and_scroll_down(self):
         # execute_script: убираем footer и прокручиваем страницу вниз
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        self.driver.execute_script("document.getElementsByTagName('footer')[0].style.display='none';")
+        self.driver.execute_script(
+            "document.getElementsByTagName('footer')[0].style.display='none';"
+        )
 
     def select_date_of_birth(self):
-        date_input = self.wait.until(EC.element_to_be_clickable(self.date_of_birth_locator))
+        
+        date_input = self.wait.until(
+            EC.element_to_be_clickable(self.date_of_birth_locator)
+        )
         date_input.click()
 
         self.wait.until(EC.visibility_of_element_located(self.calendar_locator))
 
-        month_select = self.wait.until(EC.element_to_be_clickable(self.month_select_locator))
+        month_select = self.wait.until(
+            EC.element_to_be_clickable(self.month_select_locator)
+        )
         month_select.click()
-        month_select.find_element(By.XPATH, "//option[@value='11']").click()  # December
+        month_select.find_element(By.XPATH, "//option[@value='11']").click()
 
-        year_select = self.wait.until(EC.element_to_be_clickable(self.year_select_locator))
+        year_select = self.wait.until(
+            EC.element_to_be_clickable(self.year_select_locator)
+        )
         year_select.click()
         year_select.find_element(By.XPATH, "//option[@value='1995']").click()
 
-        day_element = self.wait.until(EC.element_to_be_clickable(self.day_25_locator))
+        # Fluent Wait для дня — элемент может перерисоваться
+        fluent_wait = WebDriverWait(
+            self.driver,
+            timeout=10,
+            poll_frequency=0.5,
+            ignored_exceptions=[NoSuchElementException, StaleElementReferenceException],
+        )
+        day_element = fluent_wait.until(EC.element_to_be_clickable(self.day_25_locator))
         day_element.click()
 
     def select_state_and_city(self):
         # Dropdown State
         state_dropdown = self.wait.until(EC.element_to_be_clickable(self.state_locator))
         state_dropdown.click()
-        state_option = self.wait.until(EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'NCR')]")))
+        state_option = self.wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'NCR')]"))
+        )
         state_option.click()
 
         # Dropdown City
         city_dropdown = self.wait.until(EC.element_to_be_clickable(self.city_locator))
         city_dropdown.click()
-        city_option = self.wait.until(EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Delhi')]")))
+        city_option = self.wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Delhi')]"))
+        )
         city_option.click()
 
     def create_test_file(self):
@@ -124,16 +157,22 @@ class TestSuite:
             self.set_up_test()
 
             # Проверка, что открылась нужная форма
-            form_title = self.wait.until(EC.visibility_of_element_located(self.form_title_locator))
+            form_title = self.wait.until(
+                EC.visibility_of_element_located(self.form_title_locator)
+            )
             assert form_title.text == "Practice Form"
 
-            form_sub_title = self.wait.until(EC.visibility_of_element_located(self.form_sub_title_locator))
+            form_sub_title = self.wait.until(
+                EC.visibility_of_element_located(self.form_sub_title_locator)
+            )
             assert form_sub_title.text == "Student Registration Form"
 
             self.close_banner_if_present()
 
             # Текстовые поля
-            first_name = self.wait.until(EC.element_to_be_clickable(self.first_name_locator))
+            first_name = self.wait.until(
+                EC.element_to_be_clickable(self.first_name_locator)
+            )
             first_name.send_keys("Иван")
 
             last_name = self.driver.find_element(*self.last_name_locator)
@@ -143,7 +182,9 @@ class TestSuite:
             email.send_keys("ivan.petrov@example.com")
 
             # Радиокнопка Gender
-            gender_male = self.wait.until(EC.element_to_be_clickable(self.gender_male_locator))
+            gender_male = self.wait.until(
+                EC.element_to_be_clickable(self.gender_male_locator)
+            )
             gender_male.click()
 
             # Mobile
@@ -153,16 +194,22 @@ class TestSuite:
             # Date of Birth
             self.select_date_of_birth()
 
-            # Subjects 
-            subjects_input = self.wait.until(EC.element_to_be_clickable(self.subjects_locator))
+            # Subjects
+            subjects_input = self.wait.until(
+                EC.element_to_be_clickable(self.subjects_locator)
+            )
             subjects_input.send_keys("Computer Science")
             subjects_input.send_keys(Keys.ENTER)
 
             # Checkboxes Hobbies
-            hobby_sports = self.wait.until(EC.element_to_be_clickable(self.hobby_sports_locator))
+            hobby_sports = self.wait.until(
+                EC.element_to_be_clickable(self.hobby_sports_locator)
+            )
             hobby_sports.click()
 
-            hobby_music = self.wait.until(EC.element_to_be_clickable(self.hobby_music_locator))
+            hobby_music = self.wait.until(
+                EC.element_to_be_clickable(self.hobby_music_locator)
+            )
             hobby_music.click()
 
             # Upload Picture
@@ -177,14 +224,20 @@ class TestSuite:
             self.hide_footer_and_scroll_down()
             self.select_state_and_city()
 
-            submit_button = self.wait.until(EC.element_to_be_clickable(self.submit_button_locator))
+            submit_button = self.wait.until(
+                EC.element_to_be_clickable(self.submit_button_locator)
+            )
             self.driver.execute_script("arguments[0].click();", submit_button)
 
             # Проверка результата
-            modal_title = self.wait.until(EC.visibility_of_element_located(self.modal_title_locator))
+            modal_title = self.wait.until(
+                EC.visibility_of_element_located(self.modal_title_locator)
+            )
             assert modal_title.text == "Thanks for submitting the form"
 
-            result_table = self.wait.until(EC.visibility_of_element_located(self.result_table_locator))
+            result_table = self.wait.until(
+                EC.visibility_of_element_located(self.result_table_locator)
+            )
             result_text = result_table.text
 
             assert "Иван Петров" in result_text
@@ -210,7 +263,9 @@ class TestSuite:
             self.hide_footer_and_scroll_down()
 
             # Отправляем пустую форму
-            submit_button = self.wait.until(EC.element_to_be_clickable(self.submit_button_locator))
+            submit_button = self.wait.until(
+                EC.element_to_be_clickable(self.submit_button_locator)
+            )
             self.driver.execute_script("arguments[0].click();", submit_button)
             submit_button = self.wait.until(
                 EC.element_to_be_clickable(self.submit_button_locator)
@@ -219,9 +274,7 @@ class TestSuite:
 
             try:
                 self.wait.until(
-                    EC.visibility_of_element_located(
-                        self.modal_title_locator
-                    )
+                    EC.visibility_of_element_located(self.modal_title_locator)
                 )
 
                 assert False, "Форма отправилась с пустыми обязательными полями"
@@ -231,7 +284,7 @@ class TestSuite:
 
             # Проверяем, что модальное окно НЕ появилось
             modal_windows = self.driver.find_elements(*self.modal_title_locator)
-            #assert len(modal_windows) == 0
+            # assert len(modal_windows) == 0
             # БАГ: сайт принимает пустую форму — валидация не работает
             print("Негативный тест: сайт принял пустую форму - это баг!")
 
